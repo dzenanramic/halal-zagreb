@@ -72,6 +72,10 @@ async function runDesktop(page) {
   );
 
   check('Traka za pretragu je uklonjena', (await page.$('#location-search')) === null);
+  check(
+    'Blok aktivnih filtera je skriven dok nema filtera',
+    (await page.$('.active-filters')) === null,
+  );
 
   const statsText = await page.$eval('.stats', (node) => node.textContent ?? '');
   check('Uvod prikazuje stvarne brojeve', statsText.includes('34'), statsText.trim());
@@ -103,13 +107,15 @@ async function runDesktop(page) {
   await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-1440-full.png'), fullPage: true });
 
   // Filter područja
-  await page.click('input[name="sidebar-region"][value="zagreb-city"]');
+  await clickInView(page, 'input[name="sidebar-region"][value="zagreb-city"]');
   await wait(250);
   check(
     'Filter "Grad Zagreb" daje 25 rezultata',
     (await readCount(page)) === EXPECTED_CITY,
     `prikazano ${await readCount(page)}`,
   );
+
+  check('Blok aktivnih filtera se pojavljuje s filterom', (await page.$('.active-filters')) !== null);
 
   const chipLabels = await page.$$eval('.chip__label', (nodes) =>
     nodes.map((node) => node.textContent ?? ''),
@@ -124,6 +130,10 @@ async function runDesktop(page) {
   await page.click('.chip__remove');
   await wait(250);
   check('Uklanjanje pojedinačnog filtera radi', (await readCount(page)) === EXPECTED_TOTAL);
+  check(
+    'Blok aktivnih filtera se skriva nakon uklanjanja filtera',
+    (await page.$('.active-filters')) === null,
+  );
 
   // Detalji lokacije
   await clickInView(page, '.card__details');
@@ -192,7 +202,7 @@ async function runDesktop(page) {
   await wait(200);
 
   // Zapis bez kategorije
-  await page.click('input[name="sidebar-category"][value="uncategorized"]');
+  await clickInView(page, 'input[name="sidebar-category"][value="uncategorized"]');
   await wait(250);
   check('Filter "bez kategorije" daje 1 rezultat', (await readCount(page)) === 1);
   const uncategorizedCard = await page.$eval('.card', (node) => node.textContent ?? '');
@@ -200,9 +210,10 @@ async function runDesktop(page) {
   await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-uncategorized.png') });
 
   // Prazno stanje: Grad Zagreb + OPG (takve kombinacije nema u katalogu)
-  await page.click('input[name="sidebar-region"][value="zagreb-city"]');
-  await page.click('input[name="sidebar-category"][value="opg"]');
-  await wait(300);
+  await clickInView(page, 'input[name="sidebar-region"][value="zagreb-city"]');
+  await wait(200);
+  await clickInView(page, 'input[name="sidebar-category"][value="opg"]');
+  await wait(400);
   await page.waitForSelector('.state__title');
   const emptyTitle = await page.$eval('.state__title', (node) => node.textContent ?? '');
   check('Prazno stanje je jasno prikazano', emptyTitle.includes('Nema rezultata'), emptyTitle);
@@ -212,6 +223,46 @@ async function runDesktop(page) {
   await clickInView(page, '.state__actions .btn');
   await wait(300);
   check('Uklanjanje svih filtera vraća sve rezultate', (await readCount(page)) === EXPECTED_TOTAL);
+}
+
+async function runDetailsScroll(page) {
+  // Mali ekran: panel je ograničene visine i mora se moći doskrolati do dna.
+  await page.setViewport({ width: 375, height: 553 });
+  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.card');
+  await clickInView(page, '.card__details');
+  await page.waitForSelector('[aria-labelledby="location-details-title"]');
+
+  // Panel se otvara animacijom (kratki translateY) - pričekaj da sjedne.
+  await wait(400);
+  const panelFits = await page.evaluate(() => {
+    const rect = document.querySelector('.panel').getBoundingClientRect();
+    return rect.top >= -1 && rect.bottom <= window.innerHeight + 1;
+  });
+  check('Panel detalja stane u vidno polje (375x553)', panelFits);
+
+  await page.evaluate(() => {
+    const body = document.querySelector('.panel__body');
+    body.scrollTop = body.scrollHeight;
+  });
+  await wait(250);
+
+  const lastRow = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('.data-list__row')];
+    const last = rows[rows.length - 1];
+    const bodyRect = document.querySelector('.panel__body').getBoundingClientRect();
+    const footerTop = document.querySelector('.panel__footer').getBoundingClientRect().top;
+    const rect = last.getBoundingClientRect();
+    return {
+      text: last.innerText.replace(/\n/g, ': '),
+      visible: rect.top >= bodyRect.top - 1 && rect.bottom <= footerTop + 1,
+    };
+  });
+  check(`Zadnji redak detalja je dohvatljiv skrolanjem (${lastRow.text})`, lastRow.visible);
+
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'mobile-375-details-scrolled.png') });
+  await page.keyboard.press('Escape');
+  await wait(200);
 }
 
 async function runTablet(page) {
@@ -295,6 +346,7 @@ async function main() {
   });
 
   await runDesktop(page);
+  await runDetailsScroll(page);
   await runTablet(page);
   await runMobile(page);
 

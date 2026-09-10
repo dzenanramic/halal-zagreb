@@ -3,11 +3,10 @@ import type { Catalog } from '../data/types.ts';
 
 interface AboutSectionProps {
   catalog: Catalog | null;
-  sourceLabel: string;
 }
 
 /** O projektu: konkretno objašnjenje izvora, opsega i ograničenja. */
-export function AboutSection({ catalog, sourceLabel }: AboutSectionProps) {
+export function AboutSection({ catalog }: AboutSectionProps) {
   const { t, formatNumber } = useI18n();
 
   return (
@@ -31,9 +30,6 @@ export function AboutSection({ catalog, sourceLabel }: AboutSectionProps) {
           <div className="facts">
             <h3 className="eyebrow eyebrow--muted">{t('about.scopeTitle')}</h3>
             <ul className="facts__list">
-              <li>
-                {t('about.scopeSource', { file: sourceLabel, rows: catalog?.sourceRows ?? 0 })}
-              </li>
               {catalog !== null ? (
                 <>
                   <li>

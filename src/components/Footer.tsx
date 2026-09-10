@@ -5,11 +5,10 @@ import { BrandMark } from './BrandMark.tsx';
 import { APP_VERSION } from '../config.ts';
 
 interface FooterProps {
-  sourceLabel: string;
   onNavigate: (href: string) => void;
 }
 
-export function Footer({ sourceLabel, onNavigate }: FooterProps) {
+export function Footer({ onNavigate }: FooterProps) {
   const { t } = useI18n();
 
   return (
@@ -21,7 +20,7 @@ export function Footer({ sourceLabel, onNavigate }: FooterProps) {
               <BrandMark className="brand__mark" />
               <span className="site-footer__name">{t('app.name')}</span>
             </div>
-            <p className="site-footer__note">{t('footer.sourceNote', { file: sourceLabel })}</p>
+            <p className="site-footer__note">{t('footer.sourceNote')}</p>
           </div>
 
           <nav aria-label={t('footer.navigation')}>

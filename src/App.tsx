@@ -19,7 +19,6 @@ import { useRouter } from './hooks/useRouter.ts';
 import { useLocationQuery } from './hooks/useLocationQuery.ts';
 import { useMediaQuery } from './hooks/useMediaQuery.ts';
 import { useI18n } from './i18n/I18nContext.tsx';
-import { DATA_FILE_NAME } from './config.ts';
 import type { CategorySummary, Location, RegionSummary } from './data/types.ts';
 
 const EMPTY_LOCATIONS: Location[] = [];
@@ -52,7 +51,6 @@ export function App() {
   const locations = catalog?.locations ?? EMPTY_LOCATIONS;
   const categories = catalog?.categories ?? EMPTY_CATEGORIES;
   const regions = catalog?.regions ?? EMPTY_REGIONS;
-  const sourceLabel = state.status === 'ready' ? state.source.label : DATA_FILE_NAME;
 
   const query = useLocationQuery(locations, categories);
 
@@ -126,7 +124,7 @@ export function App() {
           onNavigate={navigate}
         />
       }
-      footer={<Footer sourceLabel={sourceLabel} onNavigate={navigate} />}
+      footer={<Footer onNavigate={navigate} />}
     >
       <PageIntro counts={introCounts} />
 
@@ -156,14 +154,10 @@ export function App() {
         </div>
       </section>
 
-      <AboutSection catalog={catalog} sourceLabel={sourceLabel} />
+      <AboutSection catalog={catalog} />
 
       {route.name === 'location' && state.status === 'ready' ? (
-        <LocationDetails
-          location={activeLocation}
-          sourceFile={sourceLabel}
-          onClose={closeLocation}
-        />
+        <LocationDetails location={activeLocation} onClose={closeLocation} />
       ) : null}
 
       <FilterDrawer

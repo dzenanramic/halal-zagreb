@@ -9,7 +9,6 @@ import { UNCATEGORIZED_ID, type Location } from '../data/types.ts';
 interface LocationDetailsProps {
   /** null kada identifikator iz rute ne postoji u katalogu. */
   location: Location | null;
-  sourceFile: string;
   onClose: () => void;
 }
 
@@ -39,7 +38,7 @@ function DataList({ rows }: { rows: DetailRow[] }) {
  * Polja koja registar ne sadrži eksplicitno su označena kao nedostupna,
  * bez izmišljenih vrijednosti.
  */
-export function LocationDetails({ location, sourceFile, onClose }: LocationDetailsProps) {
+export function LocationDetails({ location, onClose }: LocationDetailsProps) {
   const { t, categoryLabel, regionLabel } = useI18n();
   const { status, copy } = useCopyToClipboard();
 
@@ -91,14 +90,8 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
       value: location.country ?? notSpecified,
       missing: location.country === null,
     },
-    {
-      label: t('details.fieldSource'),
-      value: t('details.sourceValue', { file: sourceFile, line: location.sourceLine }),
-      missing: false,
-    },
   ];
 
-  const coordinates = external?.coordinates ?? null;
   const phone = external?.phone ?? null;
   const website = external?.website ?? null;
   const openingHours = external?.openingHours ?? null;
@@ -110,12 +103,6 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
       label: t('details.fieldHours'),
       value: openingHours ?? notAvailable,
       missing: openingHours === null,
-    },
-    {
-      label: t('details.fieldCoordinates'),
-      value:
-        coordinates === null ? notAvailable : `${coordinates.latitude}, ${coordinates.longitude}`,
-      missing: coordinates === null,
     },
   ];
 
@@ -160,18 +147,13 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
       <section className="details__section">
         <h3 className="eyebrow eyebrow--muted">{t('details.sectionAvailability')}</h3>
         <DataList rows={availabilityRows} />
-        <p className="details__note">{t('details.missingNote')}</p>
       </section>
 
-      <section className="details__section">
-        {/*
-          Mjesto za kartu: kada izvor bude sadržavao koordinate
-          (Location.external.coordinates), ovdje se može umetnuti komponenta
-          interaktivne karte bez promjene ostalih dijelova prikaza.
-        */}
-        <LocationActions location={location} />
-        <p className="details__note">{t('details.futureNote')}</p>
-      </section>
+      {/*
+        Mjesto za kartu i kontakt-radnje: kada izvor bude sadržavao telefon,
+        web adresu ili koordinate, LocationActions ih prikazuje automatski.
+      */}
+      <LocationActions location={location} />
     </Panel>
   );
 }
