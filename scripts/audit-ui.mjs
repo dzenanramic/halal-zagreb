@@ -162,7 +162,8 @@ async function main() {
   const failures = [];
 
   const audit = async (label, width, height, prepare) => {
-    await page.setViewport({ width, height, isMobile: width < 700, hasTouch: width < 700 });
+    // Bez mobilne emulacije: Chrome tada skalira koordinate i klikovi promašuju.
+    await page.setViewport({ width, height });
     await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
     await page.waitForSelector('.card');
     if (prepare) {
@@ -202,7 +203,11 @@ async function main() {
   await audit('Desktop', 1440, 960);
   await audit('Mobitel', 320, 720);
   await audit('Detalji lokacije', 1440, 960, async () => {
-    await page.click('.card .btn');
+    await page.evaluate(() => {
+      document.querySelector('.card__details')?.scrollIntoView({ block: 'center' });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await page.click('.card__details');
     await page.waitForSelector('[aria-labelledby="location-details-title"]');
   });
   await audit('Drawer s filterima (mobitel)', 320, 720, async () => {

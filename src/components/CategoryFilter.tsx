@@ -18,8 +18,8 @@ export function CategoryFilter({ value, categories, idPrefix, onChange }: Catego
   const total = categories.reduce((sum, category) => sum + category.count, 0);
 
   return (
-    <fieldset className="filters__section">
-      <legend className="filters__heading">{t('filters.category')}</legend>
+    <fieldset className="filters__group">
+      <legend className="filters__legend">{t('filters.category')}</legend>
       <div className="option-list">
         <label className="option">
           <input

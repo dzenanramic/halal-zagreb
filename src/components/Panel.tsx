@@ -49,7 +49,7 @@ export function Panel({
       >
         <div className="panel__header">
           <div className="panel__heading">
-            <p className="panel__eyebrow">{eyebrow}</p>
+            <p className="eyebrow">{eyebrow}</p>
             <h2 className="panel__title" id={titleId}>
               {title}
             </h2>

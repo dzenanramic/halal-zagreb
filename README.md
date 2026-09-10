@@ -68,9 +68,10 @@ src/
     translations.ts           svi tekstovi (HR i EN) na jednom mjestu
     I18nContext.tsx           jezik, prijevod, pluralizacija, oblikovanje brojeva
   components/                 vidi popis u nastavku
+  assets/fonts/               lokalno posluženi fontovi (Marcellus, Inter; OFL)
   styles/
-    tokens.css                boje, tipografija, razmaci, uzorak
-    base.css                  reset, fokus, pomoćne klase
+    tokens.css                @font-face, boje, tipografija, razmaci, uzorci
+    base.css                  reset, tipografska skala, fokus, pomoćne klase
     components.css            stilovi komponenti
 scripts/
   verify-dataset.ts           provjera 34 obvezne lokacije
@@ -89,8 +90,8 @@ tests/
 | `AppShell` | okvir stranice, poveznica „preskoči na sadržaj”, `<main>` |
 | `Header` | naziv, znak, navigacija, izbornik na mobitelu |
 | `LanguageSwitcher` | HR/EN bez ponovnog učitavanja |
-| `HeroSearch` | naslov, objašnjenje izvora, pretraga, stvarni brojevi iz kataloga |
-| `SearchControls` | broj rezultata, sortiranje, ulaz u filtre na mobitelu |
+| `PageIntro` | kompaktni uvod: naslov, jedna rečenica o izvoru, stvarni brojevi |
+| `ResultsToolbar` | broj rezultata, sortiranje (desktop) i ulaz u filtere (mobitel) |
 | `FilterPanel` / `RegionFilter` / `CategoryFilter` | filteri (isti sadržaj u bočnom panelu i u draweru) |
 | `FilterDrawer` / `Panel` | klizni panel s fokusom, Escape i zaključanom pozadinom |
 | `SortSelect` | relevantnost / naziv / mjesto |
@@ -101,7 +102,8 @@ tests/
 | `IncompleteDataBadge` | neutralna oznaka nepotpunih podataka |
 | `EmptyState` / `LoadingState` / `ErrorState` | prazno, učitavanje i greška |
 | `AboutSection` / `Footer` | o projektu i podnožje s izvorom podataka |
-| `BrandMark` | geometrijski znak u SVG-u (nije logotip organizacije) |
+| `BrandMark` | znak u SVG-u: osmokraka zvijezda u oktogonu (nije logotip organizacije) |
+| `Ornament` | zvjezdica za razdjelnike i oznake stanja (uvijek dekorativna) |
 
 ---
 
@@ -224,14 +226,12 @@ izostavljen.
 
 ## 6. Funkcionalnosti
 
-* **Pretraga** po nazivu, adresi i mjestu — neosjetljiva na velika slova i
-  dijakritiku (`sesvete` = `Sesvete`, `skobic` = `Škobić`). Više riječi znači
-  logičko I (`zvijezda cavica` pronalazi samo Zvijezdu plus).
 * **Filter područja**: sve lokacije / Grad Zagreb / Zagrebačka okolica.
 * **Filter kategorije**: sve kategorije, svaka stvarna kategorija iz registra i
   zasebna stavka za zapise bez kategorije.
-* **Sortiranje**: relevantnost (rezultat pretrage, bez upita redoslijed iz
-  registra), naziv (A–Ž) i mjesto.
+* **Sortiranje**: relevantnost (bez upita redoslijed iz registra), naziv (A–Ž)
+  i mjesto. Na desktopu je u traci s rezultatima, na mobitelu u draweru s
+  filterima (traka tako ostaje uska i čitljiva na 320 px).
 * **Aktivni filteri** su uvijek vidljivi i svaki se može ukloniti pojedinačno;
   postoji i „Ukloni sve filtere”.
 * **Broj rezultata** se prikazuje stalno i najavljuje čitačima ekrana
@@ -243,6 +243,13 @@ izostavljen.
   pokušajem i tehničkim detaljem.
 * **Jezik**: HR (zadano) i EN, bez ponovnog učitavanja, pamti se u
   `localStorage`.
+
+### Pretraga
+
+Polje za pretragu uklonjeno je iz sučelja (uvodni blok i traka su time kraći i
+čišći). Logika pretrage ostaje u `src/data/query.ts` (`tokenize`, `scoreLocation`,
+`selectLocations`) i pokrivena je testovima, pa se pretraga može vratiti
+dodavanjem polja u sučelje bez promjene podatkovnog sloja.
 
 ### Podaci koji se ne prikazuju jer ih izvor ne sadrži
 
@@ -298,7 +305,26 @@ fotografija ni tvrdnji da je lokacija otvorena.
 
 ---
 
-## 9. Pristupačnost i dizajn
+## 9. Vizualni smjer
+
+Smjer je "moderni islamski editorial": mirna, tipografska stranica s
+geometrijskim detaljima, bez dekorativnog nereda.
+
+* **Tipografija.** Naslovi i nazivi lokacija u fontu *Marcellus* (kamena
+  antična kapitala, diskretno srodna islamskoj epigrafici), a sučelje u *Inter*.
+  Oba fonta se poslužuju lokalno iz `src/assets/fonts/` (licencija OFL), pa
+  aplikacija radi i bez pristupa mreži.
+* **Paleta.** Topla ivory podloga (`#f7f3e9`), duboka maslinasto-zelena
+  (`#0d271c` – `#2a6046`), mesingano zlato za akcente (`#b08a3e`, za tekst
+  `#7f6119`) i tamna grafintna za tekst.
+* **Geometrija.** Osmokraka zvijezda (khatam) u znaku aplikacije, oktogon sa
+  zvijezdom kao uzorak u podnožju i zaglavlju panela, rombovi kao razdjelnici i
+  zvjezdica kao diskretni vodeni žig u kutu kartice. Sve je izrađeno u SVG-u,
+  bez slika i bez emojija.
+* **Bez zabranjenih uzoraka.** Nema gradijenata, glassmorphisma, pill gumba,
+  neona, sjena velikog raspona, cursor animacija ni scroll hijackinga.
+
+## 10. Pristupačnost
 
 * Mobile-first; provjereno na 320 px, 768 px i 1440 px bez horizontalnog
   prelijevanja.
@@ -310,9 +336,6 @@ fotografija ni tvrdnji da je lokacija otvorena.
 * Vidljiv fokus na svim kontrolama, tipkovnički dostupni paneli (Escape, fokus
   ostaje unutar panela, fokus se vraća na element koji ga je otvorio),
   poveznica „preskoči na sadržaj”, `aria-live` za broj rezultata i stanje
-  kopiranja.
-* Paleta: topla ivory pozadina, duboka maslinasto-zelena, prigušena terakota i
-  tamna grafitna za tekst. Bez gradijenata, glassmorphisma, neona, pill gumba,
-  emojija, fotografija i animacija pomicanja stranice.
-* Diskretan geometrijski uzorak (osmokraka zvijezda u mreži) koristi se samo u
-  uskom pojasu uvodnog bloka, u SVG-u i s niskom prozirnošću.
+  kopiranja, jedan `h1` po stranici.
+* Animacije su kratke i funkcionalne (otvaranje panela, promjena stanja
+  kontrola) i isključuju se uz `prefers-reduced-motion`.

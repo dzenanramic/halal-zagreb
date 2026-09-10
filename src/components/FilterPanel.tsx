@@ -1,7 +1,11 @@
 import { useI18n } from '../i18n/I18nContext.tsx';
 import { RegionFilter } from './RegionFilter.tsx';
 import { CategoryFilter } from './CategoryFilter.tsx';
-import type { CategorySummary, RegionFilter as RegionFilterValue, RegionSummary } from '../data/types.ts';
+import type {
+  CategorySummary,
+  RegionFilter as RegionFilterValue,
+  RegionSummary,
+} from '../data/types.ts';
 
 export interface FilterPanelProps {
   /** Prefiks za id/name radio grupa - sidebar i drawer ne dijele stanje. */
@@ -17,7 +21,7 @@ export interface FilterPanelProps {
 }
 
 /**
- * Sadržaj filtera: područje, kategorija i uklanjanje svih filtera.
+ * Sadržaj filtera: područje i kategorija.
  * Isti sadržaj koristi bočni panel na desktopu i drawer na mobitelu.
  */
 export function FilterPanel({
@@ -35,31 +39,28 @@ export function FilterPanel({
 
   return (
     <div>
-      <h3 className="filters__heading" id={`${idPrefix}-filters-title`}>
-        {t('filters.title')}
-      </h3>
-      <RegionFilter
-        value={region}
-        counts={regions}
-        idPrefix={idPrefix}
-        onChange={onRegionChange}
-      />
-      <CategoryFilter
-        value={category}
-        categories={categories}
-        idPrefix={idPrefix}
-        onChange={onCategoryChange}
-      />
-      <div className="filters__section">
+      <div className="filters__head">
+        <h3 className="eyebrow eyebrow--muted" id={`${idPrefix}-filters-title`}>
+          {t('filters.title')}
+        </h3>
         <button
           type="button"
-          className="btn btn--small btn--full"
+          className="link-btn"
           onClick={onClearAll}
           disabled={activeFilterCount === 0}
         >
           {t('filters.clearAll')}
         </button>
       </div>
+
+      <RegionFilter value={region} counts={regions} idPrefix={idPrefix} onChange={onRegionChange} />
+
+      <CategoryFilter
+        value={category}
+        categories={categories}
+        idPrefix={idPrefix}
+        onChange={onCategoryChange}
+      />
     </div>
   );
 }

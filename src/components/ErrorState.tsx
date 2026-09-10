@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n/I18nContext.tsx';
+import { StarIcon } from './Ornament.tsx';
 import type { TranslationKey } from '../i18n/translations.ts';
 import type { DatasetErrorCode, DatasetErrorInfo } from '../data/types.ts';
 
@@ -20,6 +21,9 @@ export function ErrorState({ info, onRetry }: ErrorStateProps) {
 
   return (
     <div className="state state--error" role="alert">
+      <span className="state__star" aria-hidden="true">
+        <StarIcon />
+      </span>
       <h3 className="state__title">{t('state.errorTitle')}</h3>
       <p className="state__body">{t(bodyKey)}</p>
 

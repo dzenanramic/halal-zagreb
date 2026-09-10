@@ -1,11 +1,11 @@
 import { useI18n } from '../i18n/I18nContext.tsx';
-import type { RegionFilter, RegionSummary } from '../data/types.ts';
+import type { RegionFilter as RegionFilterValue, RegionSummary } from '../data/types.ts';
 
 interface RegionFilterProps {
-  value: RegionFilter;
+  value: RegionFilterValue;
   counts: RegionSummary[];
   idPrefix: string;
-  onChange: (region: RegionFilter) => void;
+  onChange: (region: RegionFilterValue) => void;
 }
 
 /** Filter područja: sve lokacije, Grad Zagreb, Zagrebačka okolica. */
@@ -16,16 +16,15 @@ export function RegionFilter({ value, counts, idPrefix, onChange }: RegionFilter
   const cityCount = counts.find((entry) => entry.id === 'zagreb-city')?.count ?? 0;
   const widerCount = counts.find((entry) => entry.id === 'zagreb-wider')?.count ?? 0;
 
-  const options: { id: RegionFilter; label: string; count: number }[] = [
+  const options: { id: RegionFilterValue; label: string; count: number }[] = [
     { id: 'all', label: t('filters.regionAll'), count: cityCount + widerCount },
     { id: 'zagreb-city', label: t('filters.regionCity'), count: cityCount },
     { id: 'zagreb-wider', label: t('filters.regionWider'), count: widerCount },
   ];
 
   return (
-    <fieldset className="filters__section">
-      <legend className="filters__heading">{t('filters.region')}</legend>
-      <p className="filters__hint">{t('filters.regionHint')}</p>
+    <fieldset className="filters__group">
+      <legend className="filters__legend">{t('filters.region')}</legend>
       <div className="option-list">
         {options.map((option) => (
           <label className="option" key={option.id}>
@@ -42,6 +41,7 @@ export function RegionFilter({ value, counts, idPrefix, onChange }: RegionFilter
           </label>
         ))}
       </div>
+      <p className="filters__hint">{t('filters.regionHint')}</p>
     </fieldset>
   );
 }

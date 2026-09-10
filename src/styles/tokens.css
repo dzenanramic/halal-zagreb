@@ -1,37 +1,96 @@
 /**
  * Dizajn tokeni.
  *
- * Paleta: topla ivory pozadina, duboka maslinasto-zelena kao glavna boja,
- * prigušena terakota za male akcente i tamna grafitna za tekst.
- * Nema gradijenata, glassmorphisma, neona ni pill oblika.
+ * Smjer: "moderni islamski editorial" - topla ivory podloga, duboka
+ * maslinasto-zelena, mesingani (zlatni) akcent i geometrijski uzorak.
+ * Bez gradijenata, glassmorphisma, neona i pill oblika.
  */
+
+/* ---------- Tipografija (self-hosted, licencija OFL) ---------- */
+
+@font-face {
+  font-family: 'Marcellus';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/marcellus-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Marcellus';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/marcellus-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------- Tokeni ---------- */
 
 :root {
   /* Površine */
-  --bg: #f7f4ec;
-  --surface: #fffdf8;
-  --surface-sunken: #efeade;
-  --surface-inverse: #1c2f22;
+  --bg: #f7f3e9;
+  --bg-deep: #f0e9da;
+  --surface: #fffdf7;
+  --surface-muted: #f3eee2;
+  --surface-inverse: #0d271c;
 
   /* Tekst */
-  --ink: #22262a;
-  --ink-soft: #4b5257;
-  --ink-muted: #5f6669;
-  --ink-inverse: #f4f1e7;
+  --ink: #1b211e;
+  --ink-soft: #47504a;
+  --ink-muted: #5f6862;
+  --ink-inverse: #f4efdf;
+  --ink-inverse-soft: #bdb69f;
 
   /* Linije */
-  --line: #ded7c7;
-  --line-strong: #c6bca6;
+  --line: #e3dbc9;
+  --line-strong: #cdc2a6;
+  --line-inverse: rgba(244, 239, 223, 0.14);
 
-  /* Glavna boja */
-  --green: #1f3d2b;
-  --green-dark: #162d20;
-  --green-soft: #e7ede2;
-  --green-line: #cbd8c3;
+  /* Zelena */
+  --green-900: #0d271c;
+  --green-800: #123527;
+  --green-700: #1a4732;
+  --green-600: #2a6046;
+  --green-100: #e2ece4;
+  --green-50: #eef4ee;
 
-  /* Akcent */
+  /* Mesing / zlato */
+  --gold: #b08a3e;
+  --gold-ink: #7f6119;
+  --gold-line: #ddcba1;
+  --gold-soft: #f2e8d2;
+
+  /* Sekundarni akcent */
   --terracotta: #a2542c;
-  --terracotta-soft: #f5e7db;
+  --terracotta-soft: #f7e9dd;
 
   /* Oznake nepotpunih podataka */
   --amber: #7c5310;
@@ -39,12 +98,13 @@
   --amber-line: #e4d0a6;
 
   /* Fokus */
-  --focus: #1f3d2b;
-  --focus-inverse: #f7f4ec;
+  --focus: #1a4732;
+  --focus-inverse: #f2e8d2;
 
   /* Tipografija */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --font-display: 'Marcellus', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
 
   /* Razmaci */
   --space-1: 4px;
@@ -54,19 +114,27 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
+  --space-8: 64px;
+
+  /* Visina ljepljivog zaglavlja - koristi se za odmake sidrišta */
+  --header-h: 62px;
 
   /* Oblici - pravokutni do umjereno zaobljeni, nikad pill */
   --radius-sm: 3px;
   --radius: 6px;
-  --radius-lg: 9px;
+  --radius-lg: 10px;
 
   /* Sjene - jedva primjetne */
-  --shadow-card: 0 1px 2px rgba(34, 38, 42, 0.05);
-  --shadow-panel: 0 6px 24px rgba(34, 38, 42, 0.12);
+  --shadow-card: 0 1px 2px rgba(27, 33, 30, 0.04);
+  --shadow-hover: 0 3px 14px rgba(13, 39, 28, 0.07);
+  --shadow-panel: 0 20px 52px rgba(13, 39, 28, 0.2);
 
-  /* Trajanje prijelaza - kratko i funkcionalno */
-  --transition: 140ms ease;
+  /* Prijelazi - kratki i funkcionalni */
+  --transition: 150ms cubic-bezier(0.2, 0.6, 0.3, 1);
 
-  /* Diskretan geometrijski uzorak (osmokraka zvijezda u mreži) */
-  --pattern-stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%231f3d2b' stroke-opacity='0.13' stroke-width='1'%3E%3Cpath d='M36 4l8.5 23.5L68 36l-23.5 8.5L36 68l-8.5-23.5L4 36l23.5-8.5z'/%3E%3Cpath d='M36 16l5.5 14.5L56 36l-14.5 5.5L36 56l-5.5-14.5L16 36l14.5-5.5z'/%3E%3C/g%3E%3C/svg%3E");
+  /* Geometrijski uzorak: oktogon s osmokrakom zvijezdom i rombovima u kutovima */
+  --pattern-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%231a4732' stroke-opacity='0.085' stroke-width='1.1'%3E%3Cpath d='M15 0L0 15L-15 0L0 -15Z'/%3E%3Cpath d='M81 0L96 15L111 0L96 -15Z'/%3E%3Cpath d='M15 96L0 81L-15 96L0 111Z'/%3E%3Cpath d='M81 96L96 81L111 96L96 111Z'/%3E%3Cpath d='M75.72 59.48L59.48 75.72L36.52 75.72L20.28 59.48L20.28 36.52L36.52 20.28L59.48 20.28L75.72 36.52Z'/%3E%3Cpath d='M48 19.8L55.12 30.82L67.94 28.06L65.18 40.88L76.2 48L65.18 55.12L67.94 67.94L55.12 65.18L48 76.2L40.88 65.18L28.06 67.94L30.82 55.12L19.8 48L30.82 40.88L28.06 28.06L40.88 30.82Z'/%3E%3C/g%3E%3C/svg%3E");
+  --pattern-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23f4efdf' stroke-opacity='0.1' stroke-width='1.1'%3E%3Cpath d='M15 0L0 15L-15 0L0 -15Z'/%3E%3Cpath d='M81 0L96 15L111 0L96 -15Z'/%3E%3Cpath d='M15 96L0 81L-15 96L0 111Z'/%3E%3Cpath d='M81 96L96 81L111 96L96 111Z'/%3E%3Cpath d='M75.72 59.48L59.48 75.72L36.52 75.72L20.28 59.48L20.28 36.52L36.52 20.28L59.48 20.28L75.72 36.52Z'/%3E%3Cpath d='M48 19.8L55.12 30.82L67.94 28.06L65.18 40.88L76.2 48L65.18 55.12L67.94 67.94L55.12 65.18L48 76.2L40.88 65.18L28.06 67.94L30.82 55.12L19.8 48L30.82 40.88L28.06 28.06L40.88 30.82Z'/%3E%3C/g%3E%3C/svg%3E");
+  /* Zvjezdica koja se koristi kao diskretni ornament (npr. u kutu kartice) */
+  --star-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23b08a3e' stroke-width='1.1'%3E%3Cpath d='M12 2.5L14.6 9.4L21.5 12L14.6 14.6L12 21.5L9.4 14.6L2.5 12L9.4 9.4Z'/%3E%3Cpath d='M12 6.6L13.4 10.6L17.4 12L13.4 13.4L12 17.4L10.6 13.4L6.6 12L10.6 10.6Z'/%3E%3C/g%3E%3C/svg%3E");
 }

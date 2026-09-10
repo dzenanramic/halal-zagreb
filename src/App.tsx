@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AppShell } from './components/AppShell.tsx';
 import { Header } from './components/Header.tsx';
-import { HeroSearch } from './components/HeroSearch.tsx';
-import { SearchControls } from './components/SearchControls.tsx';
+import { PageIntro } from './components/PageIntro.tsx';
+import { ResultsToolbar } from './components/ResultsToolbar.tsx';
 import { FilterPanel } from './components/FilterPanel.tsx';
 import { FilterDrawer } from './components/FilterDrawer.tsx';
+import { SortSelect } from './components/SortSelect.tsx';
 import { ActiveFilters } from './components/ActiveFilters.tsx';
 import { LocationList } from './components/LocationList.tsx';
 import { LocationDetails } from './components/LocationDetails.tsx';
@@ -55,7 +56,7 @@ export function App() {
 
   const query = useLocationQuery(locations, categories);
 
-  const heroCounts = useMemo(
+  const introCounts = useMemo(
     () =>
       catalog === null
         ? null
@@ -74,7 +75,7 @@ export function App() {
 
   // Naslov dokumenta prati jezik.
   useEffect(() => {
-    document.title = `${t('app.name')} - ${t('app.tagline')}`;
+    document.title = `${t('app.name')} - ${t('intro.title')}`;
   }, [t, language]);
 
   // Navigacija na sekcije (Lokacije / O projektu) pomiče prikaz na sekciju.
@@ -127,16 +128,12 @@ export function App() {
       }
       footer={<Footer sourceLabel={sourceLabel} onNavigate={navigate} />}
     >
-      <HeroSearch
-        query={query.state.query}
-        onQueryChange={query.setQuery}
-        counts={heroCounts}
-      />
+      <PageIntro counts={introCounts} />
 
-      <section className="section" id="lokacije" aria-labelledby="locations-title">
+      <section className="section" id="lokacije" aria-labelledby="locations-heading">
         <div className="container">
-          <h2 className="section__title" id="locations-title">
-            {t('locations.title')}
+          <h2 className="visually-hidden" id="locations-heading">
+            {t('locations.listHeading')}
           </h2>
 
           <div className="locations__layout">
@@ -145,9 +142,8 @@ export function App() {
             </div>
 
             <div className="locations__main">
-              <SearchControls
+              <ResultsToolbar
                 resultCount={query.results.length}
-                query={query.state.query}
                 sort={query.state.sort}
                 activeFilterCount={query.activeFilterCount}
                 onSortChange={query.setSort}
@@ -176,6 +172,12 @@ export function App() {
         onClose={() => setFiltersOpen(false)}
       >
         <FilterPanel idPrefix="drawer" {...filterPanelProps} />
+        <div className="filters__group">
+          <h3 className="filters__legend">{t('locations.sortLabel')}</h3>
+          <div className="filters__sort">
+            <SortSelect value={query.state.sort} onChange={query.setSort} variant="stacked" />
+          </div>
+        </div>
       </FilterDrawer>
     </AppShell>
   );

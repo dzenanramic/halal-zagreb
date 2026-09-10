@@ -24,7 +24,7 @@ export type TranslationValue = string | PluralForms;
 
 const hr = {
   'app.name': 'Halal Zagreb',
-  'app.tagline': 'Katalog halal-certificiranih lokacija u Zagrebu i okolici',
+  'app.tagline': 'Katalog halal lokacija',
   'app.skipToContent': 'Preskoči na sadržaj',
 
   'nav.locations': 'Lokacije',
@@ -34,20 +34,13 @@ const hr = {
   'nav.home': 'Halal Zagreb - početna stranica',
   'nav.language': 'Jezik',
 
-  'hero.title': 'Pronađite halal-certificirane lokacije u Zagrebu i okolici.',
-  'hero.lead':
-    'Katalog se temelji na dostupnom registru halal-certificiranih tvrtki. Dio zapisa nema potpunu adresu, kategoriju ili druge podatke, pa su takva polja označena umjesto da se popunjavaju procjenama.',
-  'hero.searchLabel': 'Pretraga lokacija',
-  'hero.searchPlaceholder': 'Naziv, adresa ili mjesto (npr. Sesvete, Radnička cesta)',
-  'hero.searchHint': 'Pretraga ne razlikuje velika slova ni dijakritiku.',
-  'hero.searchClear': 'Očisti pretragu',
-  'hero.statTotal': {
-    one: '{count} lokacija u katalogu',
-    few: '{count} lokacije u katalogu',
-    other: '{count} lokacija u katalogu',
-  },
-  'hero.statCity': '{count} u Gradu Zagrebu',
-  'hero.statWider': '{count} u Zagrebačkoj okolici',
+  'intro.eyebrow': 'Katalog · Grad Zagreb i okolica',
+  'intro.title': 'Halal-certificirane lokacije u Zagrebu i okolici',
+  'intro.note':
+    'Podaci potječu iz dostupnog registra halal-certificiranih tvrtki. Polja koja u izvoru nedostaju označena su, a ne popunjavaju se procjenama.',
+  'stats.total': 'Ukupno lokacija',
+  'stats.city': 'Grad Zagreb',
+  'stats.wider': 'Zagrebačka okolica',
 
   'locations.title': 'Lokacije u Zagrebu i okolici',
   'locations.results': {
@@ -55,7 +48,7 @@ const hr = {
     few: '{count} rezultata',
     other: '{count} rezultata',
   },
-  'locations.resultsFor': 'za upit „{query}”',
+  'locations.listHeading': 'Popis lokacija',
   'locations.sortLabel': 'Sortiranje',
   'locations.sortRelevance': 'Relevantnost',
   'locations.sortName': 'Naziv (A-Ž)',
@@ -74,13 +67,11 @@ const hr = {
   'filters.active': 'Aktivni filteri',
   'filters.clearAll': 'Ukloni sve filtere',
   'filters.remove': 'Ukloni filter: {label}',
-  'filters.removeQuery': 'Ukloni pretragu: {label}',
   'filters.none': 'Nijedan filter nije aktivan.',
   'filters.showResults': 'Prikaži rezultate',
   'filters.close': 'Zatvori filtre',
   'filters.open': 'Filteri',
   'filters.openWithCount': 'Filteri ({count})',
-  'filters.activeQuery': 'Pretraga: „{value}”',
 
   'card.details': 'Detalji',
   'card.incomplete': 'Nepotpuni podaci',
@@ -133,8 +124,9 @@ const hr = {
   'state.errorDetails': 'Tehnički detalji',
   'state.errorCode': 'Kod greške: {code}',
   'state.emptyTitle': 'Nema rezultata za odabrane filtere.',
-  'state.emptyBody': 'Provjerite upisani pojam ili uklonite pojedini filter.',
+  'state.emptyBody': 'Uklonite pojedini filter ili odaberite drugo područje.',
 
+  'about.eyebrow': 'Izvor i opseg',
   'about.title': 'O projektu',
   'about.p1':
     'Halal Zagreb je početni katalog halal-certificiranih lokacija u Zagrebu i okolici. Prikazuje zapise iz dostupnog registra halal-certificiranih tvrtki.',
@@ -171,7 +163,7 @@ export type TranslationKey = keyof typeof hr;
 
 const en: Record<TranslationKey, TranslationValue> = {
   'app.name': 'Halal Zagreb',
-  'app.tagline': 'Halal-certified locations in Zagreb and nearby areas',
+  'app.tagline': 'Halal locations directory',
   'app.skipToContent': 'Skip to content',
 
   'nav.locations': 'Locations',
@@ -181,26 +173,20 @@ const en: Record<TranslationKey, TranslationValue> = {
   'nav.home': 'Halal Zagreb - home page',
   'nav.language': 'Language',
 
-  'hero.title': 'Find halal-certified places in Zagreb and nearby areas.',
-  'hero.lead':
-    'The directory is based on the available register of halal-certified companies. Some records lack a complete address, category or other details, so those fields are marked instead of being filled with estimates.',
-  'hero.searchLabel': 'Search locations',
-  'hero.searchPlaceholder': 'Name, address or place (e.g. Sesvete, Radnička cesta)',
-  'hero.searchHint': 'Search ignores letter case and diacritics.',
-  'hero.searchClear': 'Clear search',
-  'hero.statTotal': {
-    one: '{count} location in the directory',
-    other: '{count} locations in the directory',
-  },
-  'hero.statCity': '{count} in the City of Zagreb',
-  'hero.statWider': '{count} in the wider Zagreb area',
+  'intro.eyebrow': 'Directory · City of Zagreb and surroundings',
+  'intro.title': 'Halal-certified places in Zagreb and nearby areas',
+  'intro.note':
+    'The data comes from the available register of halal-certified companies. Fields missing in the source are marked, not filled with estimates.',
+  'stats.total': 'Total locations',
+  'stats.city': 'City of Zagreb',
+  'stats.wider': 'Wider Zagreb area',
 
   'locations.title': 'Locations in Zagreb and nearby areas',
   'locations.results': {
     one: '{count} result',
     other: '{count} results',
   },
-  'locations.resultsFor': 'for the query “{query}”',
+  'locations.listHeading': 'Location list',
   'locations.sortLabel': 'Sort',
   'locations.sortRelevance': 'Relevance',
   'locations.sortName': 'Name (A-Z)',
@@ -219,13 +205,11 @@ const en: Record<TranslationKey, TranslationValue> = {
   'filters.active': 'Active filters',
   'filters.clearAll': 'Clear all filters',
   'filters.remove': 'Remove filter: {label}',
-  'filters.removeQuery': 'Remove search: {label}',
   'filters.none': 'No filters are active.',
   'filters.showResults': 'Show results',
   'filters.close': 'Close filters',
   'filters.open': 'Filters',
   'filters.openWithCount': 'Filters ({count})',
-  'filters.activeQuery': 'Search: “{value}”',
 
   'card.details': 'Details',
   'card.incomplete': 'Incomplete data',
@@ -278,8 +262,9 @@ const en: Record<TranslationKey, TranslationValue> = {
   'state.errorDetails': 'Technical details',
   'state.errorCode': 'Error code: {code}',
   'state.emptyTitle': 'No results for the selected filters.',
-  'state.emptyBody': 'Check the search term or remove a single filter.',
+  'state.emptyBody': 'Remove a single filter or choose another area.',
 
+  'about.eyebrow': 'Source and scope',
   'about.title': 'About',
   'about.p1':
     'Halal Zagreb is an initial directory of halal-certified locations in Zagreb and nearby areas. It lists records from the available register of halal-certified companies.',

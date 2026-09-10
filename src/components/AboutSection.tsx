@@ -13,9 +13,12 @@ export function AboutSection({ catalog, sourceLabel }: AboutSectionProps) {
   return (
     <section className="about section" id="o-projektu" aria-labelledby="about-title">
       <div className="container">
-        <h2 className="section__title" id="about-title">
-          {t('about.title')}
-        </h2>
+        <div className="section-head">
+          <p className="eyebrow">{t('about.eyebrow')}</p>
+          <h2 className="section-head__title" id="about-title">
+            {t('about.title')}
+          </h2>
+        </div>
 
         <div className="about__grid">
           <div className="about__text">
@@ -25,10 +28,12 @@ export function AboutSection({ catalog, sourceLabel }: AboutSectionProps) {
             <p>{t('about.p4')}</p>
           </div>
 
-          <div className="about__facts">
-            <h3 className="about__facts-title">{t('about.scopeTitle')}</h3>
-            <ul className="about__facts-list">
-              <li>{t('about.scopeSource', { file: sourceLabel, rows: catalog?.sourceRows ?? 0 })}</li>
+          <div className="facts">
+            <h3 className="eyebrow eyebrow--muted">{t('about.scopeTitle')}</h3>
+            <ul className="facts__list">
+              <li>
+                {t('about.scopeSource', { file: sourceLabel, rows: catalog?.sourceRows ?? 0 })}
+              </li>
               {catalog !== null ? (
                 <>
                   <li>

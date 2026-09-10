@@ -13,19 +13,26 @@ export function ActiveFilters({ filters, onClearAll }: ActiveFiltersProps) {
 
   return (
     <div className="active-filters">
-      <p className="filters__heading">{t('filters.active')}</p>
+      <div className="active-filters__head">
+        <p className="eyebrow eyebrow--muted">{t('filters.active')}</p>
+        {filters.length > 0 ? (
+          <button type="button" className="link-btn" onClick={onClearAll}>
+            {t('filters.clearAll')}
+          </button>
+        ) : null}
+      </div>
 
       {filters.length === 0 ? (
         <p className="active-filters__empty">{t('filters.none')}</p>
       ) : (
         <ul className="active-filters__list">
           {filters.map((filter) => (
-            <li key={`${filter.kind}-${filter.label}`}>
-              <span className="filter-chip">
-                <span className="filter-chip__label">{filter.label}</span>
+            <li key={filter.kind}>
+              <span className="chip">
+                <span className="chip__label">{filter.label}</span>
                 <button
                   type="button"
-                  className="filter-chip__remove"
+                  className="chip__remove"
                   onClick={filter.remove}
                   aria-label={t('filters.remove', { label: filter.label })}
                 >
@@ -34,11 +41,6 @@ export function ActiveFilters({ filters, onClearAll }: ActiveFiltersProps) {
               </span>
             </li>
           ))}
-          <li>
-            <button type="button" className="btn btn--quiet btn--small" onClick={onClearAll}>
-              {t('filters.clearAll')}
-            </button>
-          </li>
         </ul>
       )}
     </div>

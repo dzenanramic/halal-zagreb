@@ -30,8 +30,10 @@ export function Header({ route, menuOpen, onMenuToggle, onNavigate }: HeaderProp
           }}
         >
           <BrandMark className="brand__mark" />
-          <span className="brand__name">{t('app.name')}</span>
-          <span className="brand__tagline">{t('app.tagline')}</span>
+          <span className="brand__text">
+            <span className="brand__name">{t('app.name')}</span>
+            <span className="brand__tagline">{t('app.tagline')}</span>
+          </span>
         </a>
 
         <nav className="site-nav" aria-label={t('nav.locations')}>
@@ -47,7 +49,12 @@ export function Header({ route, menuOpen, onMenuToggle, onNavigate }: HeaderProp
               </NavLink>
             </li>
             <li>
-              <NavLink href="#/o-projektu" className="nav-link" current={onAbout} onNavigate={onNavigate}>
+              <NavLink
+                href="#/o-projektu"
+                className="nav-link"
+                current={onAbout}
+                onNavigate={onNavigate}
+              >
                 {t('nav.about')}
               </NavLink>
             </li>
@@ -63,11 +70,7 @@ export function Header({ route, menuOpen, onMenuToggle, onNavigate }: HeaderProp
             aria-controls="mobile-menu"
             onClick={onMenuToggle}
           >
-            {menuOpen ? (
-              <X size={18} aria-hidden="true" />
-            ) : (
-              <Menu size={18} aria-hidden="true" />
-            )}
+            {menuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
             <span className="visually-hidden">
               {menuOpen ? t('nav.closeMenu') : t('nav.menu')}
             </span>

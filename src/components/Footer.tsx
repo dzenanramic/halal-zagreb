@@ -13,7 +13,7 @@ export function Footer({ sourceLabel, onNavigate }: FooterProps) {
   const { t } = useI18n();
 
   return (
-    <footer className="site-footer">
+    <footer className="site-footer on-dark">
       <div className="container">
         <div className="site-footer__grid">
           <div>
@@ -21,13 +21,11 @@ export function Footer({ sourceLabel, onNavigate }: FooterProps) {
               <BrandMark className="brand__mark" />
               <span className="site-footer__name">{t('app.name')}</span>
             </div>
-            <p className="site-footer__note">
-              {t('footer.sourceNote', { file: sourceLabel })}
-            </p>
+            <p className="site-footer__note">{t('footer.sourceNote', { file: sourceLabel })}</p>
           </div>
 
           <nav aria-label={t('footer.navigation')}>
-            <h2 className="site-footer__heading">{t('footer.navigation')}</h2>
+            <h2 className="eyebrow">{t('footer.navigation')}</h2>
             <ul className="site-footer__list">
               <li>
                 <NavLink
@@ -53,7 +51,7 @@ export function Footer({ sourceLabel, onNavigate }: FooterProps) {
           </nav>
 
           <div>
-            <h2 className="site-footer__heading">{t('footer.language')}</h2>
+            <h2 className="eyebrow">{t('footer.language')}</h2>
             <div className="site-footer__list">
               <LanguageSwitcher />
             </div>

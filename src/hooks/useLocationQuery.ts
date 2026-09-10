@@ -1,24 +1,26 @@
 /**
- * Stanje pretrage, filtera i sortiranja.
+ * Stanje filtera i sortiranja.
  *
- * Drži sirovo stanje (upit, područje, kategorija, sortiranje) i iz njega
- * izvodi rezultate te popis aktivnih filtera s prijevodima i radnjom uklanjanja.
+ * Pretraga je uklonjena iz sučelja, pa hook ne izlaže radnju za upit; polje
+ * `query` ostaje u stanju (uvijek prazno) kako bi se pretraga mogla vratiti
+ * bez promjene podatkovnog sloja - funkcije pretrage u `src/data/query.ts`
+ * ostaju pokrivene testovima.
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import { selectLocations } from '../data/query.ts';
 import {
   ALL_CATEGORIES,
+  type CategorySummary,
   type Location,
   type QueryState,
   type RegionFilter,
   type SortKey,
-  type CategorySummary,
 } from '../data/types.ts';
 import { useI18n } from '../i18n/I18nContext.tsx';
 
 export interface ActiveFilter {
-  kind: 'query' | 'region' | 'category';
+  kind: 'region' | 'category';
   /** Prikazani naziv filtera (već preveden). */
   label: string;
   remove: () => void;
@@ -27,7 +29,6 @@ export interface ActiveFilter {
 export interface LocationQueryController {
   state: QueryState;
   results: Location[];
-  setQuery: (query: string) => void;
   setRegion: (region: RegionFilter) => void;
   setCategory: (category: string) => void;
   setSort: (sort: SortKey) => void;
@@ -47,17 +48,10 @@ export function useLocationQuery(
   locations: Location[],
   categories: CategorySummary[],
 ): LocationQueryController {
-  const { t, categoryLabel, regionLabel } = useI18n();
+  const { categoryLabel, regionLabel } = useI18n();
   const [state, setState] = useState<QueryState>(INITIAL_STATE);
 
-  const results = useMemo(
-    () => selectLocations(locations, state).locations,
-    [locations, state],
-  );
-
-  const setQuery = useCallback((query: string) => {
-    setState((current) => ({ ...current, query }));
-  }, []);
+  const results = useMemo(() => selectLocations(locations, state).locations, [locations, state]);
 
   const setRegion = useCallback((region: RegionFilter) => {
     setState((current) => ({ ...current, region }));
@@ -77,15 +71,6 @@ export function useLocationQuery(
 
   const activeFilters = useMemo<ActiveFilter[]>(() => {
     const filters: ActiveFilter[] = [];
-
-    const trimmedQuery = state.query.trim();
-    if (trimmedQuery !== '') {
-      filters.push({
-        kind: 'query',
-        label: t('filters.activeQuery', { value: trimmedQuery }),
-        remove: () => setState((current) => ({ ...current, query: '' })),
-      });
-    }
 
     if (state.region !== 'all') {
       const region = state.region;
@@ -107,12 +92,11 @@ export function useLocationQuery(
     }
 
     return filters;
-  }, [state, t, regionLabel, categoryLabel, categories]);
+  }, [state, categoryLabel, regionLabel, categories]);
 
   return {
     state,
     results,
-    setQuery,
     setRegion,
     setCategory,
     setSort,

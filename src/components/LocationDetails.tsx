@@ -104,16 +104,8 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
   const openingHours = external?.openingHours ?? null;
 
   const availabilityRows: DetailRow[] = [
-    {
-      label: t('details.fieldPhone'),
-      value: phone ?? notAvailable,
-      missing: phone === null,
-    },
-    {
-      label: t('details.fieldWebsite'),
-      value: website ?? notAvailable,
-      missing: website === null,
-    },
+    { label: t('details.fieldPhone'), value: phone ?? notAvailable, missing: phone === null },
+    { label: t('details.fieldWebsite'), value: website ?? notAvailable, missing: website === null },
     {
       label: t('details.fieldHours'),
       value: openingHours ?? notAvailable,
@@ -122,9 +114,7 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
     {
       label: t('details.fieldCoordinates'),
       value:
-        coordinates === null
-          ? notAvailable
-          : `${coordinates.latitude}, ${coordinates.longitude}`,
+        coordinates === null ? notAvailable : `${coordinates.latitude}, ${coordinates.longitude}`,
       missing: coordinates === null,
     },
   ];
@@ -140,11 +130,7 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
       onClose={onClose}
       footer={
         <>
-          <button
-            type="button"
-            className="btn btn--full"
-            onClick={() => copy(location.address)}
-          >
+          <button type="button" className="btn btn--primary btn--full" onClick={() => copy(location.address)}>
             <Copy size={16} aria-hidden="true" />
             {t('details.copyAddress')}
           </button>
@@ -156,9 +142,9 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
       }
     >
       <div className="details__section">
-        <div className="card__tags">
-          <span className={hasCategory ? 'tag tag--category' : 'tag tag--missing'}>
-            <span className="tag__dot" aria-hidden="true" />
+        <div className="details__tags">
+          <span className={hasCategory ? 'tag tag--region' : 'tag tag--missing'}>
+            {hasCategory ? null : <span className="tag__dot" aria-hidden="true" />}
             {categoryLabel(location.categoryLabel)}
           </span>
           <span className="tag tag--region">{regionLabel(location.regionId)}</span>
@@ -167,12 +153,12 @@ export function LocationDetails({ location, sourceFile, onClose }: LocationDetai
       </div>
 
       <section className="details__section">
-        <h3 className="filters__heading">{t('details.sectionRecord')}</h3>
+        <h3 className="eyebrow eyebrow--muted">{t('details.sectionRecord')}</h3>
         <DataList rows={recordRows} />
       </section>
 
       <section className="details__section">
-        <h3 className="filters__heading">{t('details.sectionAvailability')}</h3>
+        <h3 className="eyebrow eyebrow--muted">{t('details.sectionAvailability')}</h3>
         <DataList rows={availabilityRows} />
         <p className="details__note">{t('details.missingNote')}</p>
       </section>

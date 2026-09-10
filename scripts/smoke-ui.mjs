@@ -3,11 +3,12 @@
  *
  * Pokretanje:
  *   1. npm run dev            (u drugom terminalu)
- *   2. npm run smoke:ui
+ *   2. node scripts/smoke-ui.mjs
  *
- * Skripta provjerava: broj učitanih lokacija, rad pretrage, filtera i
- * detalja, prebacivanje jezika, nepostojanje horizontalnog prelijevanja,
- * konzolne greške te sprema snimke ekrana u ./screenshots.
+ * Skripta provjerava: broj učitanih lokacija, rad filtera i sortiranja,
+ * detalje lokacije, prebacivanje jezika, odsutnost trake za pretragu,
+ * responzivnost (320/768/1440 px) i konzolne greške, te sprema snimke
+ * ekrana u ./screenshots.
  */
 
 import { mkdir } from 'node:fs/promises';
@@ -19,6 +20,7 @@ const CHROME = process.env.CHROME_PATH ?? '/usr/bin/google-chrome';
 const SCREENSHOT_DIR = resolve(process.cwd(), 'screenshots');
 const EXPECTED_TOTAL = 34;
 const EXPECTED_CITY = 25;
+const WATCHDOG_MS = 120000;
 
 const problems = [];
 const checks = [];
@@ -28,16 +30,254 @@ function check(label, condition, detail = '') {
   if (!condition) problems.push(`${label}${detail ? ` - ${detail}` : ''}`);
 }
 
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Dohvaća element u vidno polje i klikne ga (mobilna emulacija ima uže vidno polje). */
+async function clickInView(page, selector) {
+  await page.evaluate((sel) => {
+    document.querySelector(sel)?.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }, selector);
+  await wait(120);
+  await page.click(selector);
+}
+
 async function readCount(page) {
-  const text = await page.$eval('.toolbar__count', (node) => node.textContent ?? '');
+  const text = await page.$eval('.index-bar__count', (node) => node.textContent ?? '');
   const match = text.match(/(\d+)/);
   return match ? Number(match[1]) : Number.NaN;
+}
+
+/** Broj kartica koje dijele isti gornji rub (1 = jedna kolona, 3 = tri kolone). */
+async function columnsInFirstRow(page, sample) {
+  return page.evaluate((count) => {
+    const cards = [...document.querySelectorAll('.card')].slice(0, count);
+    if (cards.length < count) return 0;
+    const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
+    return tops.filter((top) => top === tops[0]).length;
+  }, sample);
+}
+
+async function runDesktop(page) {
+  await page.setViewport({ width: 1440, height: 960 });
+  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.card');
+
+  const cards = await page.$$eval('.card', (nodes) => nodes.length);
+  check('Učitano je 34 lokacije', cards === EXPECTED_TOTAL, `pronađeno ${cards}`);
+  check('Broj rezultata odgovara', (await readCount(page)) === EXPECTED_TOTAL);
+
+  check(
+    'Nema horizontalnog prelijevanja (1440px)',
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  );
+
+  check('Traka za pretragu je uklonjena', (await page.$('#location-search')) === null);
+
+  const statsText = await page.$eval('.stats', (node) => node.textContent ?? '');
+  check('Uvod prikazuje stvarne brojeve', statsText.includes('34'), statsText.trim());
+
+  const introHeight = await page.$eval('.intro', (node) => node.getBoundingClientRect().height);
+  check('Uvodni blok je kompaktan', introHeight < 420, `${Math.round(introHeight)}px`);
+
+  check('Stranica ima točno jedan h1', (await page.$$eval('h1', (nodes) => nodes.length)) === 1);
+
+  const fonts = await page.evaluate(async () => {
+    await document.fonts.ready;
+    return {
+      marcellus: document.fonts.check('16px Marcellus'),
+      inter: document.fonts.check('16px Inter'),
+    };
+  });
+  check('Lokalni fontovi su učitani', fonts.marcellus && fonts.inter, JSON.stringify(fonts));
+
+  check('Tri kolone na 1440px', (await columnsInFirstRow(page, 4)) === 3);
+
+  const sticky = await page.evaluate(() => ({
+    sidebar: getComputedStyle(document.querySelector('.filters')).position,
+    bar: getComputedStyle(document.querySelector('.index-bar')).position,
+  }));
+  check('Bočni filteri su ljepljivi', sticky.sidebar === 'sticky', sticky.sidebar);
+  check('Traka s rezultatima je ljepljiva', sticky.bar === 'sticky', sticky.bar);
+
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-1440.png') });
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-1440-full.png'), fullPage: true });
+
+  // Filter područja
+  await page.click('input[name="sidebar-region"][value="zagreb-city"]');
+  await wait(250);
+  check(
+    'Filter "Grad Zagreb" daje 25 rezultata',
+    (await readCount(page)) === EXPECTED_CITY,
+    `prikazano ${await readCount(page)}`,
+  );
+
+  const chipLabels = await page.$$eval('.chip__label', (nodes) =>
+    nodes.map((node) => node.textContent ?? ''),
+  );
+  check(
+    'Aktivni filter je vidljiv',
+    chipLabels.some((label) => label.includes('Zagreb')),
+    chipLabels.join(' | '),
+  );
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-filter-city.png') });
+
+  await page.click('.chip__remove');
+  await wait(250);
+  check('Uklanjanje pojedinačnog filtera radi', (await readCount(page)) === EXPECTED_TOTAL);
+
+  // Detalji lokacije
+  await clickInView(page, '.card__details');
+  await page.waitForSelector('[aria-labelledby="location-details-title"]');
+  const detailsText = await page.$eval(
+    '[aria-labelledby="location-details-title"]',
+    (node) => node.textContent ?? '',
+  );
+  check('Detalji prikazuju adresu', detailsText.includes('Adresa'));
+  check('Detalji ne izmišljaju kontakt podatke', detailsText.includes('Podatak nije dostupan'));
+  check(
+    'Detalji ne prikazuju gumbe bez podataka',
+    !detailsText.includes('Otvori u kartama') && !detailsText.includes('Nazovi'),
+  );
+  check('Detalji mijenjaju adresu (dijeljiva poveznica)', page.url().includes('#/lokacija/'));
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-details.png') });
+
+  await page.keyboard.press('Escape');
+  await wait(250);
+  check(
+    'Escape zatvara detalje',
+    (await page.$('[aria-labelledby="location-details-title"]')) === null,
+  );
+
+  // Jezik
+  await page.click('.lang-switch__button:nth-child(2)');
+  await wait(250);
+  const introTitle = await page.$eval('.intro__title', (node) => node.textContent ?? '');
+  check(
+    'Prebacivanje na engleski mijenja tekst',
+    introTitle.includes('Halal-certified places'),
+    introTitle.trim(),
+  );
+  check('HTML lang se mijenja', (await page.evaluate(() => document.documentElement.lang)) === 'en');
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-english.png') });
+
+  await page.click('.lang-switch__button:nth-child(1)');
+  await wait(200);
+
+  // Nepoznata lokacija u ruti
+  await page.goto(`${BASE_URL}#/lokacija/ne-postoji`, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('[aria-labelledby="location-details-title"]');
+  const notFoundText = await page.$eval(
+    '[aria-labelledby="location-details-title"]',
+    (node) => node.textContent ?? '',
+  );
+  check('Nepoznat identifikator prikazuje jasnu poruku', notFoundText.includes('Lokacija nije pronađena'));
+  await page.keyboard.press('Escape');
+  await wait(200);
+
+  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.card');
+
+  // Sortiranje
+  await page.select('.select', 'name');
+  await wait(250);
+  const firstCardName = await page.$eval('.card .card__name', (node) => node.textContent ?? '');
+  check('Sortiranje po nazivu počinje s "ANAMARIJA"', firstCardName.startsWith('ANAMARIJA'), firstCardName);
+
+  await page.select('.select', 'place');
+  await wait(250);
+  const firstPlace = await page.$eval('.card .card__meta-place', (node) => node.textContent ?? '');
+  check('Sortiranje po mjestu počinje s Božjakovinom', firstPlace.includes('Božjakovina'), firstPlace);
+
+  await page.select('.select', 'relevance');
+  await wait(200);
+
+  // Zapis bez kategorije
+  await page.click('input[name="sidebar-category"][value="uncategorized"]');
+  await wait(250);
+  check('Filter "bez kategorije" daje 1 rezultat', (await readCount(page)) === 1);
+  const uncategorizedCard = await page.$eval('.card', (node) => node.textContent ?? '');
+  check('Zapis bez kategorije jasno je označen', uncategorizedCard.includes('Kategorija nije navedena'));
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-uncategorized.png') });
+
+  // Prazno stanje: Grad Zagreb + OPG (takve kombinacije nema u katalogu)
+  await page.click('input[name="sidebar-region"][value="zagreb-city"]');
+  await page.click('input[name="sidebar-category"][value="opg"]');
+  await wait(300);
+  await page.waitForSelector('.state__title');
+  const emptyTitle = await page.$eval('.state__title', (node) => node.textContent ?? '');
+  check('Prazno stanje je jasno prikazano', emptyTitle.includes('Nema rezultata'), emptyTitle);
+  check('Prazno stanje nudi uklanjanje filtera', (await page.$('.state__actions .btn')) !== null);
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-empty.png') });
+
+  await clickInView(page, '.state__actions .btn');
+  await wait(300);
+  check('Uklanjanje svih filtera vraća sve rezultate', (await readCount(page)) === EXPECTED_TOTAL);
+}
+
+async function runTablet(page) {
+  await page.setViewport({ width: 768, height: 1024 });
+  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.card');
+
+  check(
+    'Nema horizontalnog prelijevanja (768px)',
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  );
+  check('Dvije kolone na 768px', (await columnsInFirstRow(page, 3)) === 2);
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'tablet-768.png') });
+}
+
+async function runMobile(page) {
+  // Napomena: bez mobilne emulacije (isMobile) jer Chrome tada skalira
+  // koordinate i CDP klikovi promašuju element; za provjeru CSS rasporeda
+  // je dovoljna širina od 320px.
+  await page.setViewport({ width: 320, height: 720 });
+  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.card');
+
+  check(
+    'Nema horizontalnog prelijevanja (320px)',
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  );
+  check('Jedna kolona na 320px', (await columnsInFirstRow(page, 2)) === 1);
+  check(
+    'Bočni filteri skriveni na mobitelu',
+    await page.evaluate(() => getComputedStyle(document.querySelector('.filters')).display === 'none'),
+  );
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'mobile-320.png') });
+
+  await clickInView(page, '.filters-toggle');
+  await page.waitForSelector('[aria-labelledby="filter-drawer-title"]');
+  check('Drawer s filterima se otvara na mobitelu', true);
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'mobile-320-filters.png') });
+
+  await page.keyboard.press('Escape');
+  await wait(250);
+  check('Escape zatvara drawer', (await page.$('[aria-labelledby="filter-drawer-title"]')) === null);
+
+  await clickInView(page, '.card__details');
+  await page.waitForSelector('[aria-labelledby="location-details-title"]');
+  check('Detalji se otvaraju na mobitelu', true);
+  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'mobile-320-details.png') });
+  await page.keyboard.press('Escape');
+}
+
+let browser = null;
+
+async function closeBrowser() {
+  if (browser === null) return;
+  try {
+    await browser.close();
+  } catch {
+    // Preglednik je već zatvoren - nije greška.
+  }
+  browser = null;
 }
 
 async function main() {
   await mkdir(SCREENSHOT_DIR, { recursive: true });
 
-  const browser = await puppeteer.launch({
+  browser = await puppeteer.launch({
     executablePath: CHROME,
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--font-render-hinting=none'],
@@ -54,233 +294,14 @@ async function main() {
     consoleErrors.push(`requestfailed ${request.url()} ${request.failure()?.errorText ?? ''}`);
   });
 
-  // --- Desktop ---
-  await page.setViewport({ width: 1440, height: 960 });
-  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('.card');
-
-  const cards = await page.$$eval('.card', (nodes) => nodes.length);
-  check('Učitano je 34 lokacije', cards === EXPECTED_TOTAL, `pronađeno ${cards}`);
-
-  const count = await readCount(page);
-  check('Broj rezultata odgovara', count === EXPECTED_TOTAL, `prikazano ${count}`);
-
-  const noOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-  );
-  check('Nema horizontalnog prelijevanja (1440px)', noOverflow);
-
-  const statsText = await page.$eval('.hero__stats', (node) => node.textContent ?? '');
-  check('Uvod prikazuje stvarne brojeve', statsText.includes('34'), statsText.trim());
-
-  const heroHeight = await page.$eval('.hero', (node) => node.getBoundingClientRect().height);
-  check('Uvodni blok ne zauzima cijeli ekran', heroHeight < 480, `${Math.round(heroHeight)}px`);
-
-  const desktopColumns = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('.card')].slice(0, 4);
-    if (cards.length < 4) return 0;
-    const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
-    return tops.filter((top) => top === tops[0]).length;
-  });
-  check('Tri kolone na 1440px', desktopColumns === 3, `kolona u prvom retku: ${desktopColumns}`);
-
-  const sidebarSticky = await page.$eval('.filters', (node) => getComputedStyle(node).position);
-  check('Bočni filteri su ljepljivi na desktopu', sidebarSticky === 'sticky', sidebarSticky);
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-1440.png'), fullPage: false });
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-1440-full.png'), fullPage: true });
-
-  // Pretraga
-  await page.type('#location-search', 'samobor');
-  await new Promise((r) => setTimeout(r, 250));
-  const searchCount = await readCount(page);
-  check('Pretraga "samobor" daje 1 rezultat', searchCount === 1, `prikazano ${searchCount}`);
-
-  await page.click('.search__clear');
-  await new Promise((r) => setTimeout(r, 250));
-  const clearedCount = await readCount(page);
-  check('Brisanje pretrage vraća sve rezultate', clearedCount === EXPECTED_TOTAL);
-
-  // Filter područja (desktop sidebar)
-  await page.click('input[name="sidebar-region"][value="zagreb-city"]');
-  await new Promise((r) => setTimeout(r, 250));
-  const cityCount = await readCount(page);
-  check('Filter "Grad Zagreb" daje 25 rezultata', cityCount === EXPECTED_CITY, `prikazano ${cityCount}`);
-
-  const chipLabels = await page.$$eval('.filter-chip__label', (nodes) =>
-    nodes.map((node) => node.textContent ?? ''),
-  );
-  check('Aktivni filter je vidljiv', chipLabels.some((label) => label.includes('Zagreb')), chipLabels.join(' | '));
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-filter-city.png') });
-
-  // Uklanjanje pojedinačnog filtera
-  await page.click('.filter-chip__remove');
-  await new Promise((r) => setTimeout(r, 250));
-  const afterRemove = await readCount(page);
-  check('Uklanjanje pojedinačnog filtera radi', afterRemove === EXPECTED_TOTAL, `prikazano ${afterRemove}`);
-
-  // Detalji lokacije
-  await page.click('.card .btn');
-  await page.waitForSelector('[aria-labelledby="location-details-title"]');
-  const detailsText = await page.$eval(
-    '[aria-labelledby="location-details-title"]',
-    (node) => node.textContent ?? '',
-  );
-  check('Detalji prikazuju adresu', detailsText.includes('Adresa'), '');
-  check(
-    'Detalji ne izmišljaju kontakt podatke',
-    detailsText.includes('Podatak nije dostupan'),
-  );
-  check(
-    'Detalji ne prikazuju gumbe bez podataka',
-    !detailsText.includes('Otvori u kartama') && !detailsText.includes('Nazovi'),
-  );
-  const detailsUrl = page.url();
-  check('Detalji mijenjaju adresu (dijeljiva poveznica)', detailsUrl.includes('#/lokacija/'), detailsUrl);
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-details.png') });
-
-  await page.keyboard.press('Escape');
-  await new Promise((r) => setTimeout(r, 250));
-  const panelClosed = (await page.$('[aria-labelledby="location-details-title"]')) === null;
-  check('Escape zatvara detalje', panelClosed);
-
-  // Jezik
-  await page.click('.lang-switch__button:nth-child(2)');
-  await new Promise((r) => setTimeout(r, 250));
-  const heroTitle = await page.$eval('.hero__title', (node) => node.textContent ?? '');
-  check('Prebacivanje na engleski mijenja tekst', heroTitle.includes('Find halal-certified'), heroTitle.trim());
-  const htmlLang = await page.evaluate(() => document.documentElement.lang);
-  check('HTML lang se mijenja', htmlLang === 'en', htmlLang);
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-english.png') });
-
-  await page.click('.lang-switch__button:nth-child(1)');
-  await new Promise((r) => setTimeout(r, 200));
-
-  // Nepostojeći identifikator u ruti (duboka poveznica koja ne postoji)
-  await page.goto(`${BASE_URL}#/lokacija/ne-postoji`, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('[aria-labelledby="location-details-title"]');
-  const notFoundText = await page.$eval(
-    '[aria-labelledby="location-details-title"]',
-    (node) => node.textContent ?? '',
-  );
-  check('Nepoznat identifikator prikazuje jasnu poruku', notFoundText.includes('Lokacija nije pronađena'));
-  await page.keyboard.press('Escape');
-  await new Promise((r) => setTimeout(r, 200));
-  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('.card');
-
-  // Sortiranje
-  await page.select('.select', 'name');
-  await new Promise((r) => setTimeout(r, 250));
-  const firstCardName = await page.$eval('.card .card__name', (node) => node.textContent ?? '');
-  check('Sortiranje po nazivu počinje s "ANAMARIJA"', firstCardName.startsWith('ANAMARIJA'), firstCardName);
-
-  await page.select('.select', 'place');
-  await new Promise((r) => setTimeout(r, 250));
-  const firstPlace = await page.$eval('.card .card__place', (node) => node.textContent ?? '');
-  check('Sortiranje po mjestu počinje s Božjakovinom', firstPlace.includes('Božjakovina'), firstPlace);
-
-  await page.select('.select', 'relevance');
-  await new Promise((r) => setTimeout(r, 200));
-
-  // Kategorija bez vrijednosti
-  await page.click('input[name="sidebar-category"][value="uncategorized"]');
-  await new Promise((r) => setTimeout(r, 250));
-  const uncategorizedCount = await readCount(page);
-  check('Filter "bez kategorije" daje 1 rezultat', uncategorizedCount === 1, `prikazano ${uncategorizedCount}`);
-  const uncategorizedCard = await page.$eval('.card', (node) => node.textContent ?? '');
-  check('Zapis bez kategorije jasno je označen', uncategorizedCard.includes('Kategorija nije navedena'));
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-uncategorized.png') });
-
-  // Prazno stanje
-  await page.evaluate(() => {
-    const input = document.querySelector('#location-search');
-    if (input) {
-      const setter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        'value',
-      ).set;
-      setter.call(input, 'pojam-koji-ne-postoji');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  });
-  await page.waitForSelector('.state__title');
-  const emptyTitle = await page.$eval('.state__title', (node) => node.textContent ?? '');
-  check('Prazno stanje je jasno prikazano', emptyTitle.includes('Nema rezultata'), emptyTitle);
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'desktop-empty.png') });
-
-  // --- Tablet ---
-  await page.setViewport({ width: 768, height: 1024 });
-  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('.card');
-  const tabletOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-  );
-  check('Nema horizontalnog prelijevanja (768px)', tabletOverflow);
-
-  const tabletColumns = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('.card')].slice(0, 3);
-    if (cards.length < 3) return 0;
-    const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
-    return tops.filter((top) => top === tops[0]).length;
-  });
-  check('Dvije kolone na 768px', tabletColumns === 2, `kolona u prvom retku: ${tabletColumns}`);
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'tablet-768.png'), fullPage: false });
-
-  // --- Mobitel 320px ---
-  await page.setViewport({ width: 320, height: 720, isMobile: true, hasTouch: true });
-  await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('.card');
-
-  const mobileOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-  );
-  check('Nema horizontalnog prelijevanja (320px)', mobileOverflow);
-
-  const columns = await page.evaluate(() => {
-    const first = document.querySelector('.card');
-    const second = document.querySelectorAll('.card')[1];
-    if (!first || !second) return 1;
-    return Math.abs(first.getBoundingClientRect().top - second.getBoundingClientRect().top) < 4 ? 2 : 1;
-  });
-  check('Jedna kolona na 320px', columns === 1, `kolona: ${columns}`);
-
-  const sidebarHidden = await page.evaluate(() => {
-    const sidebar = document.querySelector('.filters');
-    return sidebar ? getComputedStyle(sidebar).display === 'none' : false;
-  });
-  check('Bočni filteri skriveni na mobitelu', sidebarHidden);
-
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'mobile-320.png'), fullPage: false });
-
-  // Drawer s filterima
-  await page.click('.filters-toggle');
-  await page.waitForSelector('[aria-labelledby="filter-drawer-title"]');
-  const drawerVisible = (await page.$('[aria-labelledby="filter-drawer-title"]')) !== null;
-  check('Drawer s filterima se otvara na mobitelu', drawerVisible);
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'mobile-320-filters.png') });
-
-  await page.keyboard.press('Escape');
-  await new Promise((r) => setTimeout(r, 250));
-  const drawerClosed = (await page.$('[aria-labelledby="filter-drawer-title"]')) === null;
-  check('Escape zatvara drawer', drawerClosed);
-
-  // Detalji na mobitelu
-  await page.click('.card .btn');
-  await page.waitForSelector('[aria-labelledby="location-details-title"]');
-  await page.screenshot({ path: resolve(SCREENSHOT_DIR, 'mobile-320-details.png') });
-  await page.keyboard.press('Escape');
+  await runDesktop(page);
+  await runTablet(page);
+  await runMobile(page);
 
   check('Nema konzolnih grešaka', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' / '));
+}
 
-  await browser.close();
-
+function printReport() {
   console.log('Provjera sučelja (Chrome headless)');
   console.log(`URL: ${BASE_URL}`);
   for (const entry of checks) {
@@ -299,7 +320,20 @@ async function main() {
   console.log('Sve provjere su prošle.');
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+const watchdog = setTimeout(() => {
+  console.error(`Provjera je prekinuta nakon ${WATCHDOG_MS / 1000}s - nešto se zaglavilo.`);
+  void closeBrowser().finally(() => process.exit(1));
+}, WATCHDOG_MS);
+
+main()
+  .then(printReport)
+  .catch((error) => {
+    console.error(error);
+    console.error('Provjera je prekinuta greškom prije kraja.');
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    clearTimeout(watchdog);
+    await closeBrowser();
+    process.exit(process.exitCode ?? 0);
+  });
